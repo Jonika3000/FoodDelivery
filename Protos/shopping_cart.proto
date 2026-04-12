@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+option csharp_namespace = "ShoppingCartService.Protos";
+
+package shoppingcart;
+
+service ShoppingCartGrpc {
+  rpc GetActiveCart (GetActiveCartRequest) returns (CartReply);
+  rpc AddItem (AddItemRequest) returns (CartReply);
+  rpc UpdateItemQuantity (UpdateItemQuantityRequest) returns (CartReply);
+  rpc RemoveItem (RemoveItemRequest) returns (OperationReply);
+  rpc ClearCart (ClearCartRequest) returns (OperationReply);
+  rpc DiscountApplied (DiscountAppliedRequest) returns (CartReply);
+  rpc Checkout (CheckoutRequest) returns (CartReply);
+}
+
+message GetActiveCartRequest {
+  string customer_id = 1;
+}
+
+message AddItemRequest {
+  string customer_id = 1;
+  string restaurant_id = 2;
+  string restaurant_name = 3;
+  string currency = 4;
+  string product_id = 5;
+  string product_name = 6;
+  int32 quantity = 7;
+  double unit_price = 8;
+  string special_instructions = 9;
+}
+
+message UpdateItemQuantityRequest {
+  string customer_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message RemoveItemRequest {
+  string customer_id = 1;
+  string product_id = 2;
+}
+
+message ClearCartRequest {
+  string customer_id = 1;
+}
+
+message DiscountAppliedRequest {
+  string customer_id = 1;
+  double amount = 2;
+  string reason = 3;
+}
+
+message CheckoutRequest {
+  string customer_id = 1;
+}
+
+message CartReply {
+  string id = 1;
+  string customer_id = 2;
+  string restaurant_id = 3;
+  string restaurant_name = 4;
+  string currency = 5;
+  string status = 6;
+  int32 total_items = 7;
+  double discount_amount = 8;
+  string discount_reason = 9;
+  double total_amount = 10;
+  string created_at_utc = 11;
+  string updated_at_utc = 12;
+  string checked_out_at_utc = 13;
+  repeated CartItemReply items = 14;
+}
+
+message CartItemReply {
+  string product_id = 1;
+  string product_name = 2;
+  int32 quantity = 3;
+  double unit_price = 4;
+  double total_price = 5;
+  string special_instructions = 6;
+}
+
+message OperationReply {
+  bool success = 1;
+}

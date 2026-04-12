@@ -1,0 +1,83 @@
+services:
+  shoppingcartservice:
+    image: shoppingcartservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ShoppingCartDb: Host=shoppingcart-db;Port=5432;Database=shoppingcart;Username=postgres;Password=postgres
+      ConnectionStrings__EventStoreDb: Host=shoppingcart-events-db;Port=5432;Database=shoppingcart_events;Username=postgres;Password=postgres
+    depends_on:
+      shoppingcart-db:
+        condition: service_healthy
+      shoppingcart-events-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  shoppingcart-db:
+    image: postgres:17-alpine
+    container_name: shoppingcart-db
+    environment:
+      POSTGRES_DB: shoppingcart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - shoppingcart-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoppingcart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  shoppingcart-events-db:
+    image: postgres:17-alpine
+    container_name: shoppingcart-events-db
+    environment:
+      POSTGRES_DB: shoppingcart_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - shoppingcart-events-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoppingcart_events"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  shoppingcart-postgres-data:
+  shoppingcart-events-postgres-data:
