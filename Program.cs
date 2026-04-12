@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using ShoppingCartService.Infrastructure;
-using ShoppingCartService.Services;
+using ShoppingCartService.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddGrpc();

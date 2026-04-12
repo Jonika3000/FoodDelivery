@@ -1,8 +1,7 @@
-using Google.Protobuf.Collections;
 using ShoppingCartService.Application.Contracts;
 using ShoppingCartService.Protos;
 
-namespace ShoppingCartService.Services;
+namespace ShoppingCartService.Infrastructure.Services;
 
 public static class GrpcMappings
 {

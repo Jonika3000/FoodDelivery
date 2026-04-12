@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using ShoppingCartService.Application.Abstractions;
-using ShoppingCartService.Application.Services;
 using ShoppingCartService.Infrastructure.Persistence;
 
 namespace ShoppingCartService.Infrastructure;

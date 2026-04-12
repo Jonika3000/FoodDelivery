@@ -5,7 +5,7 @@ using ShoppingCartService.Protos;
 using AddCartItemContract = ShoppingCartService.Application.Contracts.AddCartItemRequest;
 using DiscountAppliedContract = ShoppingCartService.Application.Contracts.DiscountAppliedRequest;
 
-namespace ShoppingCartService.Services;
+namespace ShoppingCartService.Infrastructure.Services;
 
 public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartService)
     : ShoppingCartGrpc.ShoppingCartGrpcBase
