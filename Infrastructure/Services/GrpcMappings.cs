@@ -1,5 +1,5 @@
 using ShoppingCartService.Application.Contracts;
-using ShoppingCartService.Protos;
+using ShoppingCartService.Infrastructure.Protos;
 
 namespace ShoppingCartService.Infrastructure.Services;
 

@@ -1,7 +1,7 @@
 using Grpc.Core;
 using ShoppingCartService.Application.Abstractions;
 using ShoppingCartService.Domain.Exceptions;
-using ShoppingCartService.Protos;
+using ShoppingCartService.Infrastructure.Protos;
 using AddCartItemContract = ShoppingCartService.Application.Contracts.AddCartItemRequest;
 using DiscountAppliedContract = ShoppingCartService.Application.Contracts.DiscountAppliedRequest;
 
