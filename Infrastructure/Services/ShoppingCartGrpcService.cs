@@ -44,7 +44,8 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
                     request.ProductName,
                     request.Quantity,
                     Convert.ToDecimal(request.UnitPrice),
-                    NormalizeOptional(request.SpecialInstructions)),
+                    NormalizeOptional(request.SpecialInstructions),
+                    request.RequestId),
                 context.CancellationToken);
 
             return cart.ToReply();
@@ -62,7 +63,7 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
             var cart = await shoppingCartService.UpdateItemQuantityAsync(
                 ParseGuid(request.CustomerId, nameof(request.CustomerId)),
                 ParseGuid(request.ProductId, nameof(request.ProductId)),
-                request.Quantity,
+                new ShoppingCartService.Application.Contracts.UpdateCartItemQuantityRequest(request.Quantity, request.RequestId),
                 context.CancellationToken);
 
             return cart.ToReply();
@@ -80,6 +81,7 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
             await shoppingCartService.DeleteItemAsync(
                 ParseGuid(request.CustomerId, nameof(request.CustomerId)),
                 ParseGuid(request.ProductId, nameof(request.ProductId)),
+                request.RequestId,
                 context.CancellationToken);
 
             return new OperationReply { Success = true };
@@ -96,6 +98,7 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
         {
             await shoppingCartService.ClearAsync(
                 ParseGuid(request.CustomerId, nameof(request.CustomerId)),
+                request.RequestId,
                 context.CancellationToken);
 
             return new OperationReply { Success = true };
@@ -114,7 +117,8 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
                 ParseGuid(request.CustomerId, nameof(request.CustomerId)),
                 new DiscountAppliedContract(
                     Convert.ToDecimal(request.Amount),
-                    NormalizeOptional(request.Reason)),
+                    NormalizeOptional(request.Reason),
+                    request.RequestId),
                 context.CancellationToken);
 
             return cart.ToReply();
@@ -131,6 +135,7 @@ public sealed class ShoppingCartGrpcService(IShoppingCartService shoppingCartSer
         {
             var cart = await shoppingCartService.CheckoutAsync(
                 ParseGuid(request.CustomerId, nameof(request.CustomerId)),
+                request.RequestId,
                 context.CancellationToken);
 
             return cart.ToReply();

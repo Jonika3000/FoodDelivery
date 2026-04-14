@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ShoppingCartService.Infrastructure;
 using ShoppingCartService.Infrastructure.Services;
 
@@ -11,8 +12,9 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ShoppingCartService.Infrastructure.Persistence.ShoppingCartDbContext>();
     var eventStoreDbContext = scope.ServiceProvider.GetRequiredService<ShoppingCartService.Infrastructure.Persistence.EventStoreDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-    await eventStoreDbContext.Database.EnsureCreatedAsync();
+    
+    await dbContext.Database.MigrateAsync();
+    await eventStoreDbContext.Database.MigrateAsync();
 }
 
 app.MapGrpcService<ShoppingCartGrpcService>();

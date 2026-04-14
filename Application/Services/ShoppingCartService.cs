@@ -21,6 +21,12 @@ public sealed class ShoppingCartService(
     {
         ValidateCustomer(customerId);
 
+        if (await IsAlreadyProcessedAsync(request.RequestId, cancellationToken))
+        {
+            var cartDto = await GetActiveCartAsync(customerId, cancellationToken);
+            return cartDto ?? throw new DomainException("Active cart was not found.");
+        }
+
         var cart = await shoppingCartRepository.GetActiveByCustomerIdAsync(customerId, cancellationToken);
         if (cart is null)
         {
@@ -50,30 +56,40 @@ public sealed class ShoppingCartService(
                 request.UnitPrice,
                 request.SpecialInstructions
             },
+            request.RequestId,
             cancellationToken);
 
         return cart.ToDto();
     }
 
-    public async Task<CartDto> UpdateItemQuantityAsync(Guid customerId, Guid productId, int quantity, CancellationToken cancellationToken)
+    public async Task<CartDto> UpdateItemQuantityAsync(Guid customerId, Guid productId, UpdateCartItemQuantityRequest request, CancellationToken cancellationToken)
     {
         ValidateCustomer(customerId);
 
+        if (await IsAlreadyProcessedAsync(request.RequestId, cancellationToken))
+        {
+            var cartDto = await GetActiveCartAsync(customerId, cancellationToken);
+            return cartDto ?? throw new DomainException("Active cart was not found.");
+        }
+
         var cart = await GetRequiredCartAsync(customerId, cancellationToken);
-        cart.ChangeItemQuantity(productId, quantity);
+        cart.ChangeItemQuantity(productId, request.Quantity);
 
         await SaveCartAndEventAsync(
             cart,
             "ItemQuantityUpdated",
-            new { ProductId = productId, Quantity = quantity },
+            new { ProductId = productId, Quantity = request.Quantity },
+            request.RequestId,
             cancellationToken);
 
         return cart.ToDto();
     }
 
-    public async Task DeleteItemAsync(Guid customerId, Guid productId, CancellationToken cancellationToken)
+    public async Task DeleteItemAsync(Guid customerId, Guid productId, string? requestId, CancellationToken cancellationToken)
     {
         ValidateCustomer(customerId);
+
+        if (await IsAlreadyProcessedAsync(requestId, cancellationToken)) return;
 
         var cart = await GetRequiredCartAsync(customerId, cancellationToken);
         cart.RemoveItem(productId);
@@ -82,22 +98,31 @@ public sealed class ShoppingCartService(
             cart,
             "ItemRemoved",
             new { ProductId = productId },
+            requestId,
             cancellationToken);
     }
 
-    public async Task ClearAsync(Guid customerId, CancellationToken cancellationToken)
+    public async Task ClearAsync(Guid customerId, string? requestId, CancellationToken cancellationToken)
     {
         ValidateCustomer(customerId);
+
+        if (await IsAlreadyProcessedAsync(requestId, cancellationToken)) return;
 
         var cart = await GetRequiredCartAsync(customerId, cancellationToken);
         cart.Clear();
 
-        await SaveCartAndEventAsync(cart, "CartCleared", new { }, cancellationToken);
+        await SaveCartAndEventAsync(cart, "CartCleared", new { }, requestId, cancellationToken);
     }
 
     public async Task<CartDto> DiscountAppliedAsync(Guid customerId, DiscountAppliedRequest request, CancellationToken cancellationToken)
     {
         ValidateCustomer(customerId);
+
+        if (await IsAlreadyProcessedAsync(request.RequestId, cancellationToken))
+        {
+            var cartDto = await GetActiveCartAsync(customerId, cancellationToken);
+            return cartDto ?? throw new DomainException("Active cart was not found.");
+        }
 
         var cart = await GetRequiredCartAsync(customerId, cancellationToken);
         cart.DiscountApplied(request.Amount, request.Reason);
@@ -111,19 +136,26 @@ public sealed class ShoppingCartService(
                 request.Reason,
                 cart.TotalAmount
             },
+            request.RequestId,
             cancellationToken);
 
         return cart.ToDto();
     }
 
-    public async Task<CartDto> CheckoutAsync(Guid customerId, CancellationToken cancellationToken)
+    public async Task<CartDto> CheckoutAsync(Guid customerId, string? requestId, CancellationToken cancellationToken)
     {
         ValidateCustomer(customerId);
+
+        if (await IsAlreadyProcessedAsync(requestId, cancellationToken))
+        {
+            var cartDto = await GetActiveCartAsync(customerId, cancellationToken);
+            return cartDto ?? throw new DomainException("Active cart was not found.");
+        }
 
         var cart = await GetRequiredCartAsync(customerId, cancellationToken);
         cart.Checkout();
 
-        await SaveCartAndEventAsync(cart, "CartCheckedOut", new { cart.CheckedOutAtUtc }, cancellationToken);
+        await SaveCartAndEventAsync(cart, "CartCheckedOut", new { cart.CheckedOutAtUtc }, requestId, cancellationToken);
         return cart.ToDto();
     }
 
@@ -141,10 +173,17 @@ public sealed class ShoppingCartService(
         }
     }
 
+    private async Task<bool> IsAlreadyProcessedAsync(string? requestId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(requestId)) return false;
+        return await shoppingCartEventStore.HasBeenProcessedAsync(requestId, cancellationToken);
+    }
+
     private async Task SaveCartAndEventAsync(
         ShoppingCart cart,
         string eventType,
         object payload,
+        string? requestId,
         CancellationToken cancellationToken)
     {
         await shoppingCartRepository.SaveChangesAsync(cancellationToken);
@@ -156,6 +195,12 @@ public sealed class ShoppingCartService(
             JsonSerializer.Serialize(payload));
 
         await shoppingCartEventStore.AppendAsync(shoppingCartEvent, cancellationToken);
+        
+        if (!string.IsNullOrWhiteSpace(requestId))
+        {
+            await shoppingCartEventStore.MarkAsProcessedAsync(requestId, cancellationToken);
+        }
+        
         await shoppingCartEventStore.SaveChangesAsync(cancellationToken);
     }
 }

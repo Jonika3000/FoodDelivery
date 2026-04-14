@@ -6,6 +6,7 @@ namespace ShoppingCartService.Infrastructure.Persistence;
 public sealed class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options) : DbContext(options)
 {
     public DbSet<ShoppingCartEvent> ShoppingCartEvents => Set<ShoppingCartEvent>();
+    public DbSet<ProcessedRequest> ProcessedRequests => Set<ProcessedRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,14 @@ public sealed class EventStoreDbContext(DbContextOptions<EventStoreDbContext> op
 
             builder.HasIndex(@event => new { @event.CartId, @event.OccurredAtUtc });
             builder.HasIndex(@event => new { @event.CustomerId, @event.OccurredAtUtc });
+        });
+
+        modelBuilder.Entity<ProcessedRequest>(builder =>
+        {
+            builder.ToTable("processed_requests");
+            builder.HasKey(r => r.RequestId);
+            builder.Property(r => r.RequestId).HasMaxLength(128).IsRequired();
+            builder.Property(r => r.ProcessedAtUtc).IsRequired();
         });
     }
 }

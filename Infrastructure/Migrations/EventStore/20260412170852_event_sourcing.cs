@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ShoppingCartService.Migrations
+namespace ShoppingCartService.Infrastructure.Migrations.EventStore
 {
     /// <inheritdoc />
     public partial class event_sourcing : Migration

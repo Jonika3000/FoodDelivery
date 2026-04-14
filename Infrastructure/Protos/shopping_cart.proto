@@ -28,31 +28,37 @@ message AddItemRequest {
   int32 quantity = 7;
   double unit_price = 8;
   string special_instructions = 9;
+  string request_id = 10;
 }
 
 message UpdateItemQuantityRequest {
   string customer_id = 1;
   string product_id = 2;
   int32 quantity = 3;
+  string request_id = 4;
 }
 
 message RemoveItemRequest {
   string customer_id = 1;
   string product_id = 2;
+  string request_id = 3;
 }
 
 message ClearCartRequest {
   string customer_id = 1;
+  string request_id = 2;
 }
 
 message DiscountAppliedRequest {
   string customer_id = 1;
   double amount = 2;
   string reason = 3;
+  string request_id = 4;
 }
 
 message CheckoutRequest {
   string customer_id = 1;
+  string request_id = 2;
 }
 
 message CartReply {

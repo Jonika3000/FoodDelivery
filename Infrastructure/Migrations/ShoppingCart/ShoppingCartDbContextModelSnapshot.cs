@@ -2,21 +2,18 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShoppingCartService.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace ShoppingCartService.Migrations
+namespace ShoppingCartService.Infrastructure.Migrations.ShoppingCart
 {
     [DbContext(typeof(ShoppingCartDbContext))]
-    [Migration("20260412162914_Initial")]
-    partial class Initial
+    partial class ShoppingCartDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,7 +56,7 @@ namespace ShoppingCartService.Migrations
                     b.HasIndex("ShoppingCartId", "ProductId")
                         .IsUnique();
 
-                    b.ToTable("shopping_cart_service_items", "public");
+                    b.ToTable("shopping_cart_items", "public");
                 });
 
             modelBuilder.Entity("ShoppingCartService.Domain.Entities.ShoppingCart", b =>
@@ -82,6 +79,14 @@ namespace ShoppingCartService.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("DiscountReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
                     b.Property<Guid>("RestaurantId")
                         .HasColumnType("uuid");
 
@@ -102,7 +107,7 @@ namespace ShoppingCartService.Migrations
 
                     b.HasIndex("CustomerId", "Status");
 
-                    b.ToTable("shopping_cart_service", "public");
+                    b.ToTable("shopping_cart", "public");
                 });
 
             modelBuilder.Entity("ShoppingCartService.Domain.Entities.CartItem", b =>

@@ -9,11 +9,11 @@ using ShoppingCartService.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace ShoppingCartService.Migrations
+namespace ShoppingCartService.Infrastructure.Migrations.EventStore
 {
     [DbContext(typeof(EventStoreDbContext))]
-    [Migration("20260412170852_event_sourcing")]
-    partial class event_sourcing
+    [Migration("20260414071749_AddProcessedRequests")]
+    partial class AddProcessedRequests
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,20 @@ namespace ShoppingCartService.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("ShoppingCartService.Domain.Entities.ProcessedRequest", b =>
+                {
+                    b.Property<string>("RequestId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RequestId");
+
+                    b.ToTable("processed_requests", "public");
+                });
 
             modelBuilder.Entity("ShoppingCartService.Domain.Entities.ShoppingCartEvent", b =>
                 {

@@ -8,8 +8,9 @@ public sealed record AddCartItemRequest(
     string ProductName,
     int Quantity,
     decimal UnitPrice,
-    string? SpecialInstructions);
+    string? SpecialInstructions,
+    string? RequestId = null);
 
-public sealed record UpdateCartItemQuantityRequest(int Quantity);
+public sealed record UpdateCartItemQuantityRequest(int Quantity, string? RequestId = null);
 
-public sealed record DiscountAppliedRequest(decimal Amount, string? Reason);
+public sealed record DiscountAppliedRequest(decimal Amount, string? Reason, string? RequestId = null);

@@ -15,7 +15,7 @@ public sealed class ShoppingCartDbContext(DbContextOptions<ShoppingCartDbContext
 
         modelBuilder.Entity<ShoppingCart>(builder =>
         {
-            builder.ToTable("shopping_cart_service");
+            builder.ToTable("shopping_cart");
             builder.HasKey(cart => cart.Id);
 
             builder.Property(cart => cart.CustomerId).IsRequired();
@@ -43,7 +43,7 @@ public sealed class ShoppingCartDbContext(DbContextOptions<ShoppingCartDbContext
 
         modelBuilder.Entity<CartItem>(builder =>
         {
-            builder.ToTable("shopping_cart_service_items");
+            builder.ToTable("shopping_cart_items");
             builder.HasKey(item => item.Id);
 
             builder.Property(item => item.ProductId).IsRequired();

@@ -13,8 +13,12 @@ public static class DependencyInjection
         var eventStoreConnectionString = configuration.GetConnectionString("EventStoreDb")
                                         ?? throw new InvalidOperationException("Connection string 'EventStoreDb' is not configured.");
 
-        services.AddDbContext<ShoppingCartDbContext>(options => options.UseNpgsql(shoppingCartConnectionString));
-        services.AddDbContext<EventStoreDbContext>(options => options.UseNpgsql(eventStoreConnectionString));
+        services.AddDbContext<ShoppingCartDbContext>(options =>
+            options.UseNpgsql(shoppingCartConnectionString,
+                x => x.MigrationsAssembly(typeof(ShoppingCartDbContext).Assembly.FullName)));
+        services.AddDbContext<EventStoreDbContext>(options =>
+            options.UseNpgsql(eventStoreConnectionString,
+                x => x.MigrationsAssembly(typeof(EventStoreDbContext).Assembly.FullName)));
         services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
         services.AddScoped<IShoppingCartEventStore, ShoppingCartEventStore>();
         services.AddScoped<IShoppingCartService, Application.Services.ShoppingCartService>();
