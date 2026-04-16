@@ -7,7 +7,7 @@ namespace ShoppingCartService.Domain.Entities;
 public class ShoppingCart : IAggregateRoot
 {
     private readonly List<CartItem> _items = [];
-    private readonly List<IShoppingCartDomainEvent> _uncommittedEvents = [];
+    private readonly List<IDomainEvent> _domainEvents = [];
 
     private ShoppingCart()
     {
@@ -44,6 +44,14 @@ public class ShoppingCart : IAggregateRoot
         Status = CartStatus.Active;
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = CreatedAtUtc;
+
+        Raise(new CartCreated(
+            Id,
+            CustomerId,
+            RestaurantId,
+            RestaurantName,
+            Currency,
+            CreatedAtUtc));
     }
 
     public Guid Id { get; private set; }
@@ -70,7 +78,7 @@ public class ShoppingCart : IAggregateRoot
 
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
-    public IReadOnlyCollection<IShoppingCartDomainEvent> UncommittedEvents => _uncommittedEvents.AsReadOnly();
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public decimal SubtotalAmount => decimal.Round(_items.Sum(item => item.TotalPrice), 2, MidpointRounding.AwayFromZero);
 
@@ -214,20 +222,20 @@ public class ShoppingCart : IAggregateRoot
         IEnumerable<IShoppingCartDomainEvent> history)
     {
         var cart = new ShoppingCart(customerId, restaurantId, restaurantName, currency);
-        cart._uncommittedEvents.Clear();
+        cart._domainEvents.Clear();
 
         foreach (var domainEvent in history.OrderBy(e => e.OccurredAtUtc))
         {
             cart.Apply(domainEvent);
         }
 
-        cart._uncommittedEvents.Clear();
+        cart._domainEvents.Clear();
         return cart;
     }
 
-    public void ClearUncommittedEvents()
+    public void ClearDomainEvents()
     {
-        _uncommittedEvents.Clear();
+        _domainEvents.Clear();
     }
 
     public void Apply(IShoppingCartDomainEvent domainEvent)
@@ -245,6 +253,9 @@ public class ShoppingCart : IAggregateRoot
                 break;
             case CartCheckedOut cartCheckedOut:
                 Apply(cartCheckedOut);
+                break;
+            case CartCreated cartCreated:
+                Apply(cartCreated);
                 break;
             default:
                 throw new DomainException($"Unsupported event type: {domainEvent.GetType().Name}.");
@@ -303,10 +314,22 @@ public class ShoppingCart : IAggregateRoot
         UpdatedAtUtc = domainEvent.OccurredAtUtc;
     }
 
+    public void Apply(CartCreated domainEvent)
+    {
+        Id = domainEvent.CartId;
+        CustomerId = domainEvent.CustomerId;
+        RestaurantId = domainEvent.RestaurantId;
+        RestaurantName = domainEvent.RestaurantName;
+        Currency = domainEvent.Currency;
+        Status = CartStatus.Active;
+        CreatedAtUtc = domainEvent.OccurredAtUtc;
+        UpdatedAtUtc = domainEvent.OccurredAtUtc;
+    }
+
     private void Raise(IShoppingCartDomainEvent domainEvent)
     {
         Apply(domainEvent);
-        _uncommittedEvents.Add(domainEvent);
+        _domainEvents.Add(domainEvent);
     }
 
     private CartItem FindItem(Guid productId)

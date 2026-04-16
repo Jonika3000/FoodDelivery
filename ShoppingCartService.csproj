@@ -30,10 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Domain\Validator\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Protobuf Include="Infrastructure\Protos\shopping_cart.proto">
         <Generator>MSBuild:Compile</Generator>
       </Protobuf>

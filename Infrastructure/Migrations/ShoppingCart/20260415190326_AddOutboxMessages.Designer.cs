@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShoppingCartService.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using ShoppingCartService.Infrastructure.Persistence;
 namespace ShoppingCartService.Infrastructure.Migrations.ShoppingCart
 {
     [DbContext(typeof(ShoppingCartDbContext))]
-    partial class ShoppingCartDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260415190326_AddOutboxMessages")]
+    partial class AddOutboxMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,18 +71,9 @@ namespace ShoppingCartService.Infrastructure.Migrations.ShoppingCart
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Error")
-                        .HasColumnType("text");
-
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsDeadLetter")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastAttemptAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -88,13 +82,10 @@ namespace ShoppingCartService.Infrastructure.Migrations.ShoppingCart
                     b.Property<DateTime?>("ProcessedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("RetryCount")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProcessedAtUtc")
-                        .HasFilter("\"ProcessedAtUtc\" IS NULL AND \"RetryCount\" < 3 AND \"IsDeadLetter\" = FALSE");
+                        .HasFilter("\"ProcessedAtUtc\" IS NULL");
 
                     b.ToTable("outbox_messages", "public");
                 });

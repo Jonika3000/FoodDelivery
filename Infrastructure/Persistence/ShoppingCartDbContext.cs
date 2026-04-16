@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ShoppingCartService.Domain.Abstractions;
 using ShoppingCartService.Domain.Entities;
 
 namespace ShoppingCartService.Infrastructure.Persistence;
@@ -8,6 +9,8 @@ public sealed class ShoppingCartDbContext(DbContextOptions<ShoppingCartDbContext
     public DbSet<ShoppingCart> ShoppingCarts => Set<ShoppingCart>();
 
     public DbSet<CartItem> CartItems => Set<CartItem>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,5 +57,44 @@ public sealed class ShoppingCartDbContext(DbContextOptions<ShoppingCartDbContext
 
             builder.HasIndex(item => new { item.ShoppingCartId, item.ProductId }).IsUnique();
         });
+
+        modelBuilder.Entity<OutboxMessage>(builder =>
+        {
+            builder.ToTable("outbox_messages");
+            builder.HasKey(m => m.Id);
+
+            builder.Property(m => m.EventType).IsRequired();
+            builder.Property(m => m.Payload).IsRequired();
+            builder.Property(m => m.CreatedAtUtc).IsRequired();
+            builder.Property(m => m.ProcessedAtUtc);
+            builder.Property(m => m.Error);
+            builder.Property(m => m.RetryCount).IsRequired();
+            builder.Property(m => m.LastAttemptAtUtc);
+            builder.Property(m => m.IsDeadLetter).IsRequired();
+
+            builder.HasIndex(m => m.ProcessedAtUtc).HasFilter("\"ProcessedAtUtc\" IS NULL AND \"RetryCount\" < 3 AND \"IsDeadLetter\" = FALSE");
+        });
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var domainEvents = ChangeTracker.Entries<IAggregateRoot>()
+            .SelectMany(x =>
+            {
+                var events = x.Entity.DomainEvents.ToList();
+                x.Entity.ClearDomainEvents();
+                return events;
+            })
+            .ToList();
+
+        var outboxMessages = domainEvents.Select(domainEvent => new OutboxMessage(
+            Guid.NewGuid(),
+            domainEvent.GetType().Name,
+            System.Text.Json.JsonSerializer.Serialize(domainEvent, domainEvent.GetType())
+        )).ToList();
+
+        await OutboxMessages.AddRangeAsync(outboxMessages, cancellationToken);
+
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

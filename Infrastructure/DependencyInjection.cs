@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ShoppingCartService.Application.Abstractions;
 using ShoppingCartService.Infrastructure.Persistence;
+using ShoppingCartService.Infrastructure.Producer;
+using ShoppingCartService.Infrastructure.Services;
 
 namespace ShoppingCartService.Infrastructure;
 
@@ -20,8 +22,12 @@ public static class DependencyInjection
             options.UseNpgsql(eventStoreConnectionString,
                 x => x.MigrationsAssembly(typeof(EventStoreDbContext).Assembly.FullName)));
         services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IShoppingCartEventStore, ShoppingCartEventStore>();
         services.AddScoped<IShoppingCartService, Application.Services.ShoppingCartService>();
+
+        services.AddSingleton<IKafkaProducer, KafkaProducer>();
+        services.AddHostedService<OutboxBackgroundService>();
 
         return services;
     }

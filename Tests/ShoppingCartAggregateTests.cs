@@ -29,9 +29,10 @@ public sealed class ShoppingCartAggregateTests
             restaurantId,
             "Pizza Place",
             "usd",
-            cart.UncommittedEvents);
+            cart.DomainEvents.Cast<IShoppingCartDomainEvent>());
 
-        Assert.Equal(6, cart.UncommittedEvents.Count);
+        Assert.Equal(7, cart.DomainEvents.Count);
+        Assert.IsType<CartCreated>(cart.DomainEvents.First());
         Assert.Equal(CartStatus.CheckedOut, restoredCart.Status);
         Assert.Equal(2, restoredCart.Items.Count);
         Assert.Equal(2, restoredCart.TotalItems);
